@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include "Book.h"
 
@@ -10,20 +11,21 @@
 class Branch {
 private:
     std::string name;
-    int capacity;               // максимальное число книг в филиале
-    std::vector<Book> catalog;  // коллекция книг, хранящихся в филиале
+    int capacity; // максимальное число книг в филиале
+    std::vector<Book> catalog; // коллекция книг, хранящихся в филиале
 
 public:
-    Branch(const std::string& name, int capacity);
+    Branch(std::string_view name, int capacity);
 
     // Изменение характеристик объекта
-    void setName(const std::string& newName);
+    void setName(std::string_view newName);
     void setCapacity(int newCapacity);
 
     // Работа с коллекцией книг
-    bool addBook(const Book& book);   // false, если филиал переполнен
+    bool addBook(const Book& book); // false, если филиал переполнен
     bool removeBookById(int id);
     Book* findBookById(int id);
+    const Book* findBookById(int id) const;
     bool isFull() const;
 
     // Получение отдельных характеристик
