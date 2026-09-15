@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include "Book.h"
@@ -6,12 +8,17 @@
 
 using namespace std;
 
-// Упрощённая версия: без повторного запроса при ошибке ввода.
 int readInt(const string& prompt) {
-    cout << prompt;
     string input;
-    getline(cin, input);
-    return stoi(input);
+    while (true) {
+        cout << prompt;
+        getline(cin, input);
+        stringstream ss(input);
+        int number;
+        char extra;
+        if (ss >> number && !(ss >> extra)) return number;
+        cout << "Ошибка! Введите целое число.\n";
+    }
 }
 
 string readLine(const string& prompt) {
@@ -24,15 +31,15 @@ string readLine(const string& prompt) {
 // Ищет книгу по ID. Если книга в одном из филиалов — branchIndex указывает
 // на него, и возвращается указатель на книгу. Если книга у читателя —
 // branchIndex = -1. Если книга не найдена нигде — возвращается nullptr.
-const Book* findBook(const vector<Branch>& branches, const vector<Book>& issued, int id, int& branchIndex) {
+Book* findBook(vector<Branch>& branches, vector<Book>& issued, int id, int& branchIndex) {
     for (size_t i = 0; i < branches.size(); ++i) {
-        const Book* book = branches[i].findBookById(id);
+        Book* book = branches[i].findBookById(id);
         if (book) {
             branchIndex = static_cast<int>(i);
             return book;
         }
     }
-    for (const auto& book : issued) {
+    for (auto& book : issued) {
         if (book.getId() == id) {
             branchIndex = -1;
             return &book;
@@ -41,23 +48,23 @@ const Book* findBook(const vector<Branch>& branches, const vector<Book>& issued,
     return nullptr;
 }
 
-void printBranchesShort(const vector<Branch>& branches) {
+void printBranchesShort(vector<Branch>& branches) {
     for (size_t i = 0; i < branches.size(); ++i) {
         cout << i + 1 << ". ";
         branches[i].printShort();
     }
 }
 
-void printEverything(const vector<Branch>& branches, const vector<Book>& issued) {
-    for (const auto& branch : branches) branch.printCatalog();
+void printEverything(vector<Branch>& branches, const vector<Book>& issued) {
+    for (auto& branch : branches) branch.printCatalog();
     cout << "У читателей:\n";
     if (issued.empty()) cout << " Никого.\n";
-    for (const auto& book : issued) book.printShort();
+    for (auto& book : issued) book.printShort();
 }
 
 // Даёт выбрать филиал из списка; переспрашивает, если он переполнен.
 // 0 — отмена (возвращает -1).
-int chooseFreeBranch(const vector<Branch>& branches) {
+int chooseFreeBranch(vector<Branch>& branches) {
     if (branches.empty()) {
         cout << "Филиалов пока нет.\n";
         return -1;
@@ -81,25 +88,25 @@ int chooseFreeBranch(const vector<Branch>& branches) {
 
 // ---------- Пункты главного меню ----------
 
-void showBranches(const vector<Branch>& branches) {
+void showBranches(vector<Branch>& branches) {
     if (branches.empty()) { cout << "Филиалов пока нет.\n"; return; }
-    for (const auto& branch : branches) branch.printCatalog();
+    for (auto& branch : branches) branch.printCatalog();
 }
 
-void showBookInfo(const vector<Branch>& branches, const vector<Book>& issued) {
+void showBookInfo(vector<Branch>& branches, vector<Book>& issued) {
     printEverything(branches, issued);
     int id = readInt("Введите ID книги: ");
     int branchIndex;
-    const Book* book = findBook(branches, issued, id, branchIndex);
+    Book* book = findBook(branches, issued, id, branchIndex);
     if (!book) { cout << "Книга с таким ID не найдена.\n"; return; }
     book->printInfo();
 }
 
 void issueBook(vector<Branch>& branches, vector<Book>& issued) {
-    for (const auto& branch : branches) branch.printCatalog();
+    for (auto& branch : branches) branch.printCatalog();
     int id = readInt("Введите ID книги для выдачи: ");
     int branchIndex;
-    const Book* book = findBook(branches, issued, id, branchIndex);
+    Book* book = findBook(branches, issued, id, branchIndex);
     if (!book || branchIndex == -1) { cout << "Книга с таким ID не найдена в филиалах.\n"; return; }
     Book copy = *book;
     copy.markIssued();
@@ -110,29 +117,29 @@ void issueBook(vector<Branch>& branches, vector<Book>& issued) {
 
 void returnBook(vector<Branch>& branches, vector<Book>& issued) {
     if (issued.empty()) { cout << "Сейчас ни одна книга не у читателей.\n"; return; }
-    for (const auto& book : issued) book.printShort();
+    for (auto& book : issued) book.printShort();
     int id = readInt("Введите ID книги для возврата: ");
     int branchIndex;
-    const Book* book = findBook(branches, issued, id, branchIndex);
+    Book* book = findBook(branches, issued, id, branchIndex);
     if (!book || branchIndex != -1) { cout << "Книга с таким ID не числится у читателей.\n"; return; }
     cout << "Выберите филиал для возврата:\n";
     int destIndex = chooseFreeBranch(branches);
     if (destIndex == -1) { cout << "Возврат отменён.\n"; return; }
     Book copy = *book;
     copy.markReturned(branches[destIndex].getName());
-    for (size_t i = 0; i < issued.size(); ++i) {
-        if (issued[i].getId() == id) { issued.erase(issued.begin() + i); break; }
-    }
+    auto it = std::find_if(issued.begin(), issued.end(),
+                            [id](const Book& b) { return b.getId() == id; });
+    if (it != issued.end()) issued.erase(it);
     branches[destIndex].addBook(copy);
     cout << "Книга \"" << copy.getTitle() << "\" возвращена в \"" << branches[destIndex].getName() << "\".\n";
 }
 
 void moveBook(vector<Branch>& branches) {
-    for (const auto& branch : branches) branch.printCatalog();
+    for (auto& branch : branches) branch.printCatalog();
     int id = readInt("Введите ID книги для перемещения: ");
     int branchIndex;
     vector<Book> empty; // выдаваемых книг тут не ищем
-    const Book* book = findBook(branches, empty, id, branchIndex);
+    Book* book = findBook(branches, empty, id, branchIndex);
     if (!book || branchIndex == -1) { cout << "Книга с таким ID не найдена в филиалах.\n"; return; }
     cout << "Книга сейчас в филиале \"" << branches[branchIndex].getName() << "\". Куда переместить?\n";
     printBranchesShort(branches);
@@ -148,49 +155,7 @@ void moveBook(vector<Branch>& branches) {
     cout << "Книга \"" << copy.getTitle() << "\" перемещена в \"" << branches[destIndex].getName() << "\".\n";
 }
 
-// ---------- Управление (разбито на отдельные функции, чтобы снизить
-// когнитивную сложность manage()) ----------
-
-void addBranchAction(vector<Branch>& branches) {
-    string name = readLine("Название филиала: ");
-    int capacity = readInt("Вместимость: ");
-    branches.emplace_back(name, capacity);
-    cout << "Филиал \"" << name << "\" добавлен.\n";
-}
-
-void addBookAction(vector<Branch>& branches, int& nextId) {
-    if (branches.empty()) { cout << "Сначала добавьте филиал.\n"; return; }
-    string title = readLine("Название книги: ");
-    string author = readLine("Автор: ");
-    cout << "Куда поместить книгу?\n";
-    int branchIndex = chooseFreeBranch(branches);
-    if (branchIndex == -1) { cout << "Добавление отменено.\n"; return; }
-    Book newBook(nextId, title, author, branches[branchIndex].getName());
-    branches[branchIndex].addBook(newBook);
-    cout << "Книга добавлена с ID " << nextId << ".\n";
-    ++nextId;
-}
-
-void deleteBookAction(vector<Branch>& branches, const vector<Book>& issued) {
-    for (const auto& branch : branches) branch.printCatalog();
-    int id = readInt("Введите ID книги для удаления: ");
-    int branchIndex;
-    const Book* book = findBook(branches, issued, id, branchIndex);
-    if (!book) { cout << "Книга с таким ID не найдена.\n"; return; }
-    if (branchIndex == -1) { cout << "Эта книга сейчас у читателя, удалить её нельзя.\n"; return; }
-    cout << "Книга \"" << book->getTitle() << "\" удалена.\n";
-    branches[branchIndex].removeBookById(id);
-}
-
-void deleteBranchAction(vector<Branch>& branches) {
-    if (branches.empty()) { cout << "Филиалов пока нет.\n"; return; }
-    printBranchesShort(branches);
-    int num = readInt("Номер филиала для удаления: ");
-    if (num < 1 || num > static_cast<int>(branches.size())) { cout << "Некорректный номер.\n"; return; }
-    string name = branches[num - 1].getName();
-    branches.erase(branches.begin() + (num - 1));
-    cout << "Филиал \"" << name << "\" и все его книги удалены.\n";
-}
+// ---------- Управление ----------
 
 void manage(vector<Branch>& branches, vector<Book>& issued, int& nextId) {
     int choice;
@@ -198,13 +163,47 @@ void manage(vector<Branch>& branches, vector<Book>& issued, int& nextId) {
         cout << "\n----- Управление -----\n";
         cout << "1. Добавить филиал\n2. Добавить книгу\n3. Удалить книгу\n4. Удалить филиал\n0. Назад\n";
         choice = readInt("Выберите пункт: ");
-        switch (choice) {
-            case 1: addBranchAction(branches); break;
-            case 2: addBookAction(branches, nextId); break;
-            case 3: deleteBookAction(branches, issued); break;
-            case 4: deleteBranchAction(branches); break;
-            case 0: break;
-            default: cout << "Такого пункта меню нет.\n";
+        if (choice == 1) {
+            string name = readLine("Название филиала: ");
+            int capacity = readInt("Вместимость: ");
+            branches.push_back(Branch(name, capacity));
+            cout << "Филиал \"" << name << "\" добавлен.\n";
+        }
+        else if (choice == 2) {
+            if (branches.empty()) { cout << "Сначала добавьте филиал.\n"; continue; }
+            string title = readLine("Название книги: ");
+            string author = readLine("Автор: ");
+            cout << "Куда поместить книгу?\n";
+            int branchIndex = chooseFreeBranch(branches);
+            if (branchIndex == -1) { cout << "Добавление отменено.\n"; continue; }
+            Book newBook(nextId, title, author, branches[branchIndex].getName());
+            branches[branchIndex].addBook(newBook);
+            cout << "Книга добавлена с ID " << nextId << ".\n";
+            nextId++;
+        }
+        else if (choice == 3) {
+            for (auto& branch : branches) branch.printCatalog();
+            int id = readInt("Введите ID книги для удаления: ");
+            int branchIndex;
+            Book* book = findBook(branches, issued, id, branchIndex);
+            if (!book) { cout << "Книга с таким ID не найдена.\n"; }
+            else if (branchIndex == -1) { cout << "Эта книга сейчас у читателя, удалить её нельзя.\n"; }
+            else {
+                cout << "Книга \"" << book->getTitle() << "\" удалена.\n";
+                branches[branchIndex].removeBookById(id);
+            }
+        }
+        else if (choice == 4) {
+            if (branches.empty()) { cout << "Филиалов пока нет.\n"; continue; }
+            printBranchesShort(branches);
+            int num = readInt("Номер филиала для удаления: ");
+            if (num < 1 || num > static_cast<int>(branches.size())) { cout << "Некорректный номер.\n"; continue; }
+            string name = branches[num - 1].getName();
+            branches.erase(branches.begin() + (num - 1));
+            cout << "Филиал \"" << name << "\" и все его книги удалены.\n";
+        }
+        else if (choice != 0) {
+            cout << "Такого пункта меню нет.\n";
         }
     } while (choice != 0);
 }
@@ -228,8 +227,8 @@ int main() {
     vector<Book> issued;
     int nextId = 1;
 
-    branches.emplace_back("Филиал №1", 5);
-    branches.emplace_back("Филиал №2", 5);
+    branches.push_back(Branch("Филиал №1", 5));
+    branches.push_back(Branch("Филиал №2", 5));
     branches[0].addBook(Book(nextId++, "Война и мир", "Л.Н. Толстой", branches[0].getName()));
     branches[0].addBook(Book(nextId++, "Мастер и Маргарита", "М.А. Булгаков", branches[0].getName()));
     branches[1].addBook(Book(nextId++, "Евгений Онегин", "А.С. Пушкин", branches[1].getName()));
