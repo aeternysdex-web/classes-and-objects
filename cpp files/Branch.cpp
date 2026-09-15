@@ -1,11 +1,8 @@
 #include "Branch.h"
 #include <iostream>
 
-Branch::Branch(std::string_view name, int capacity)
+Branch::Branch(const std::string& name, int capacity)
     : name(name), capacity(capacity) {}
-
-void Branch::setName(std::string_view newName) { name = newName; }
-void Branch::setCapacity(int newCapacity) { capacity = newCapacity; }
 
 bool Branch::addBook(const Book& book) {
     // Ограничение предметной области: нельзя превышать вместимость филиала
@@ -22,13 +19,6 @@ bool Branch::removeBookById(int id) {
         }
     }
     return false;
-}
-
-Book* Branch::findBookById(int id) {
-    for (auto& book : catalog) {
-        if (book.getId() == id) return &book;
-    }
-    return nullptr;
 }
 
 const Book* Branch::findBookById(int id) const {
@@ -48,9 +38,9 @@ int Branch::getBooksCount() const { return static_cast<int>(catalog.size()); }
 
 void Branch::printCatalog() const {
     std::cout << "=== Филиал \"" << name << "\" (книг: " << catalog.size()
-               << "/" << capacity << ") ===\n";
+        << "/" << capacity << ") ===\n";
     if (catalog.empty()) {
-        std::cout << " В филиале нет книг.\n";
+        std::cout << "  В филиале нет книг.\n";
     }
     for (const auto& book : catalog) {
         book.printShort();
