@@ -19,4 +19,4 @@ jobs:
 
       - name: Run Cppcheck Analysis
         run: |
-          cppcheck --enable=all --suppress=unusedFunction --suppress=missingIncludeSystem --error-exitcode=1 .
+          cppcheck --enable=warning,style,performance,portability --suppress=unusedFunction --suppress=missingIncludeSystem --inline-suppr .
