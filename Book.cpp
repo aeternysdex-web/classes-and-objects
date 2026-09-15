@@ -1,15 +1,15 @@
 #include "Book.h"
 #include <iostream>
 
-Book::Book(int id, const std::string& title, const std::string& author,
-    const std::string& initialBranchName)
-    : id(id), title(title), author(author), issued(false),
-    currentLocation(initialBranchName) {
-    history.push_back(initialBranchName);
+Book::Book(int id, std::string_view title, std::string_view author,
+    std::string_view initialBranchName)
+    : id(id), title(title), author(author),
+      currentLocation(initialBranchName) {
+    history.emplace_back(initialBranchName);
 }
 
-void Book::setTitle(const std::string& newTitle) { title = newTitle; }
-void Book::setAuthor(const std::string& newAuthor) { author = newAuthor; }
+void Book::setTitle(std::string_view newTitle) { title = newTitle; }
+void Book::setAuthor(std::string_view newAuthor) { author = newAuthor; }
 
 void Book::markIssued() {
     issued = true;
@@ -17,15 +17,15 @@ void Book::markIssued() {
     history.push_back(currentLocation);
 }
 
-void Book::markReturned(const std::string& branchName) {
+void Book::markReturned(std::string_view branchName) {
     issued = false;
     currentLocation = branchName;
-    history.push_back(branchName);
+    history.emplace_back(branchName);
 }
 
-void Book::markMoved(const std::string& branchName) {
+void Book::markMoved(std::string_view branchName) {
     currentLocation = branchName;
-    history.push_back(branchName);
+    history.emplace_back(branchName);
 }
 
 int Book::getId() const { return id; }
@@ -49,5 +49,5 @@ void Book::printInfo() const {
 }
 
 void Book::printShort() const {
-    std::cout << "  ID " << id << ": \"" << title << "\", " << author << "\n";
+    std::cout << " ID " << id << ": \"" << title << "\", " << author << "\n";
 }
