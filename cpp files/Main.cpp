@@ -6,7 +6,8 @@
 
 using namespace std;
 
-int readInt(const string& prompt) {
+int readInt(const string& prompt)
+{
     cout << prompt;
     int number;
     cin >> number;
@@ -14,25 +15,30 @@ int readInt(const string& prompt) {
     return number;
 }
 
-string readLine(const string& prompt) {
+string readLine(const string& prompt)
+{
     cout << prompt;
     string line;
     getline(cin, line);
     return line;
 }
 
-void printBranches(const vector<Branch>& branches) {
-    for (size_t i = 0; i < branches.size(); ++i) {
+void printBranches(const vector<Branch>& branches)
+{
+    for (size_t i = 0; i < branches.size(); ++i) 
+    {
         cout << i + 1 << ". ";
         branches[i].printShort();
     }
 }
 
-// Ищет книгу по ID во всех филиалах. branchIndex — индекс филиала, где нашли.
-const Book* findBook(const vector<Branch>& branches, int id, int& branchIndex) {
-    for (size_t i = 0; i < branches.size(); ++i) {
+const Book* findBook(const vector<Branch>& branches, int id, int& branchIndex) 
+{
+    for (size_t i = 0; i < branches.size(); ++i) 
+    {
         const Book* book = branches[i].findBookById(id);
-        if (book) {
+        if (book) 
+        {
             branchIndex = static_cast<int>(i);
             return book;
         }
@@ -41,45 +47,53 @@ const Book* findBook(const vector<Branch>& branches, int id, int& branchIndex) {
     return nullptr;
 }
 
-void showBranches(const vector<Branch>& branches) {
+void showBranches(const vector<Branch>& branches) 
+{
     for (const auto& branch : branches) branch.printCatalog();
 }
 
-void showBookInfo(const vector<Branch>& branches) {
+void showBookInfo(const vector<Branch>& branches)
+{
     showBranches(branches);
     int id = readInt("Введите ID книги: ");
     int branchIndex;
     const Book* book = findBook(branches, id, branchIndex);
-    if (!book) { cout << "Книга с таким ID не найдена.\n"; return; }
+    if (!book) 
+        cout << "Книга с таким ID не найдена.\n"; return;
     book->printInfo();
 }
 
-void addBook(vector<Branch>& branches, int& nextId) {
+void addBook(vector<Branch>& branches, int& nextId)
+{
     string title = readLine("Название книги: ");
     string author = readLine("Автор: ");
     cout << "В какой филиал добавить?\n";
     printBranches(branches);
     int choice = readInt("Номер филиала: ");
-    if (choice < 1 || choice > static_cast<int>(branches.size())) { cout << "Некорректный номер.\n"; return; }
+    if (choice < 1 || choice > static_cast<int>(branches.size()))  
+        cout << "Некорректный номер.\n"; return; 
     int index = choice - 1;
-    if (branches[index].isFull()) { cout << "Филиал \"" << branches[index].getName() << "\" переполнен.\n"; return; }
-
+    if (branches[index].isFull()) 
+        cout << "Филиал \"" << branches[index].getName() << "\" переполнен.\n"; return;
     branches[index].addBook(Book(nextId, title, author));
     cout << "Книга добавлена с ID " << nextId << ".\n";
     nextId++;
 }
 
-void deleteBook(vector<Branch>& branches) {
+void deleteBook(vector<Branch>& branches) 
+{
     showBranches(branches);
     int id = readInt("Введите ID книги для удаления: ");
     int branchIndex;
     const Book* book = findBook(branches, id, branchIndex);
-    if (!book) { cout << "Книга с таким ID не найдена.\n"; return; }
+    if (!book)  
+        cout << "Книга с таким ID не найдена.\n"; return;
     cout << "Книга \"" << book->getTitle() << "\" удалена.\n";
     branches[branchIndex].removeBookById(id);
 }
 
-void printMenu() {
+void printMenu() 
+{
     cout << "\n========== Сеть библиотек ==========\n";
     cout << "1. Показать филиалы и книги в них\n";
     cout << "2. Информация о книге\n";
@@ -89,7 +103,8 @@ void printMenu() {
     cout << "=====================================\n";
 }
 
-int main() {
+int main() 
+{
     vector<Branch> branches;
     branches.emplace_back("Филиал №1", 5);
     branches.emplace_back("Филиал №2", 5);
@@ -101,10 +116,12 @@ int main() {
     cout << "Загружены тестовые данные: 2 филиала.\n";
 
     int choice;
-    do {
+    do 
+    {
         printMenu();
         choice = readInt("Выберите пункт меню: ");
-        switch (choice) {
+        switch (choice) 
+        {
         case 1: showBranches(branches); break;
         case 2: showBookInfo(branches); break;
         case 3: addBook(branches, nextId); break;
