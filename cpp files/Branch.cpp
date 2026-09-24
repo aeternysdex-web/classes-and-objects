@@ -4,16 +4,19 @@
 Branch::Branch(const std::string& name, int capacity)
     : name(name), capacity(capacity) {}
 
-bool Branch::addBook(const Book& book) {
-    // Ограничение предметной области: нельзя превышать вместимость филиала
+bool Branch::addBook(const Book& book) 
+{
     if (isFull()) return false;
     catalog.push_back(book);
     return true;
 }
 
-bool Branch::removeBookById(int id) {
-    for (size_t i = 0; i < catalog.size(); ++i) {
-        if (catalog[i].getId() == id) {
+bool Branch::removeBookById(int id) 
+{
+    for (size_t i = 0; i < catalog.size(); ++i)
+    {
+        if (catalog[i].getId() == id) 
+        {
             catalog.erase(catalog.begin() + i);
             return true;
         }
@@ -21,14 +24,17 @@ bool Branch::removeBookById(int id) {
     return false;
 }
 
-const Book* Branch::findBookById(int id) const {
-    for (const auto& book : catalog) {
+const Book* Branch::findBookById(int id) const 
+{
+    for (const auto& book : catalog)
+    {
         if (book.getId() == id) return &book;
     }
     return nullptr;
 }
 
-bool Branch::isFull() const {
+bool Branch::isFull() const
+{
     return static_cast<int>(catalog.size()) >= capacity;
 }
 
@@ -36,7 +42,8 @@ std::string Branch::getName() const { return name; }
 int Branch::getCapacity() const { return capacity; }
 int Branch::getBooksCount() const { return static_cast<int>(catalog.size()); }
 
-void Branch::printCatalog() const {
+void Branch::printCatalog() const 
+{
     std::cout << "=== Филиал \"" << name << "\" (книг: " << catalog.size()
         << "/" << capacity << ") ===\n";
     if (catalog.empty()) {
